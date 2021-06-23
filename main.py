@@ -8,6 +8,8 @@ from game_functions import *
 def main():
     pygame.init()
     os.environ['SDL_VIDEO_CENTERED'] = '1'
+    pygame.mixer.music.load("./data/sounds/bg2.mp3")
+    pygame.mixer.music.play(-1)
     start_screen()
     terminate()
 

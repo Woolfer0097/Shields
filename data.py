@@ -5,7 +5,10 @@ button = load_image("btn.png")
 medium_button = load_image("medium_btn.png")
 long_button = load_image("long_btn.png")
 settings_window = load_image("settings_bg.png")
-blurred_bg = load_image("blurred_bg.png")
+input_box_frame = load_image("input_box.png")
+ask_bg = load_image("ask_bg.png")
+wall_mark = load_image("mark.png")
+help_window = load_image("help_window.png")
 bg = load_image("bg.png")
 
 data = [("./data/images/btn.png", "."), ("./data/images/medium_btn.png", "."),

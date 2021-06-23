@@ -1,86 +1,57 @@
-import pygame,sys
-from pygame import *
-from pygame.locals import *
+import pygame as pg
 
 
-displayIndex = 0
-pygame.init()
+def main():
+    screen = pg.display.set_mode((640, 480))
+    font = pg.font.Font(None, 32)
+    clock = pg.time.Clock()
+    input_box = pg.Rect(100, 100, 140, 32)
+    color_inactive = "#D5FAFF"
+    color_active = "#B2FFDE"
+    color = color_inactive
+    active = False
+    text = ''
+    done = False
+
+    while not done:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                done = True
+            if event.type == pg.MOUSEBUTTONDOWN:
+                # If the user clicked on the input_box rect.
+                if input_box.collidepoint(event.pos):
+                    # Toggle the active variable.
+                    active = not active
+                else:
+                    active = False
+                # Change the current color of the input box.
+                color = color_active if active else color_inactive
+            if event.type == pg.KEYDOWN:
+                if active:
+                    if event.key == pg.K_RETURN:
+                        print(text)
+                        text = ''
+                    elif event.key == pg.K_BACKSPACE:
+                        text = text[:-1]
+                    else:
+                        text += event.unicode
+
+        screen.fill((30, 30, 30))
+        # Render the current text.
+        txt_surface = font.render(text, True, color)
+        # Resize the box if the text is too long.
+        width = max(200, txt_surface.get_width()+10)
+        input_box.w = width
+        # Blit the text.
+        screen.blit(txt_surface, (input_box.x+5, input_box.y+5))
+        # Blit the input_box rect.
+        pg.draw.rect(screen, color, input_box, 2)
+
+        pg.display.flip()
+        clock.tick(30)
 
 
-
-##standard 16:9 display ratios
-DISPLAYS = [(1024,576),(1152,648),(1280,720),(1600,900),(1920,1080),(2560,1440)]
-screen = pygame.display.set_mode(DISPLAYS[displayIndex])
-screen.fill((0,0,0))
-### change image path to a string that names an image you'd like to load for testing. I just used a smiley face from google image search.
-### Put it in the same place as this file or set up your paths appropriately
-imagePath = "./data/images/bg.png"
-
-
-
-class Icon(pygame.sprite.Sprite):
-    def __init__(self,x,y):
-        pygame.sprite.Sprite.__init__(self)
-        self.smileyImage = pygame.image.load(imagePath)
-        self.image = self.smileyImage.convert_alpha()
-        ### need to assume a default scale, DISPLAYS[0] will be default for us
-        self.rect = self.image.get_rect()
-        self.posX = x
-        self.posY = y
-        self.rect.x = x
-        self.rect.y = y
-        self.defaultx = (float(self.rect[2])/DISPLAYS[0][0])*100
-        self.defaulty = (float(self.rect[3])/DISPLAYS[0][1])*100
-        ## this is the percent of the screen that the image should take up in the x and y planes
-
-
-
-    def updateSize(self,):
-        self.image = ImageRescaler(self.smileyImage,(self.defaultx,self.defaulty))
-        self.rect = self.image.get_rect()
-        self.rect.x = self.posX
-        self.rect.y = self.posY
-
-
-
-def ImageRescaler(image,originalScaleTuple): #be sure to restrict to only proper ratios
-    newImage = pygame.transform.scale(image,(int(DISPLAYS[displayIndex][0]*(originalScaleTuple[0]/100)),
-                                         int(DISPLAYS[displayIndex][1]*(originalScaleTuple[1]/100))))
-    return newImage
-
-
-
-def resizeDisplay():
-    screen = pygame.display.set_mode(DISPLAYS[displayIndex])
-    ## this is where you'd have'd probably want your sprite groups set to resize themselves
-    ## Just gonna call it on icon here
-    icon.updateSize()
-
-
-
-icon = Icon(100,100)
-while True:
-    screen.fill((0,0,0))
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            pygame.quit()
-            sys.exit()
-
-
-
-        if event.type == KEYDOWN:
-            if event.key == K_LEFT:
-                displayIndex -=1
-                if displayIndex < 0:
-                    displayIndex = 5
-                resizeDisplay()
-            elif event.key == K_RIGHT:
-                displayIndex+=1
-                if displayIndex > 5:
-                    displayIndex = 0
-                resizeDisplay()
-
-
-
-    screen.blit(icon.image,(icon.rect.x,icon.rect.y))
-    pygame.display.update()
+if __name__ == '__main__':
+    pg.init()
+    main()
+    pg.quit()

@@ -2,104 +2,41 @@ from data import *
 
 
 # Класс доски для игры в "Щиты"
-class Board(pygame.sprite.Sprite):
-    def __init__(self, width, height, left, top):
-        super().__init__(all_sprites)
+class Board:
+    def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.board = [[" "] * width for _ in range(height)]
-        self.step = 0
-        self.cell_size = 124
+        self.board = [[0] * width for _ in range(height)]
+        self.left = 0
+        self.top = 0
+        self.cell_size = 0
+
+    def set_view(self, left, top, cell_size):
         self.left = left
         self.top = top
-        self.cross_image = load_image("player_symbol.png")
-        self.zero_image = load_image("irbis_symbol.png")
-        self.screen = load_image("mini_game_frame.png")
-        self.coord_ratio = {(0, 0): 0, (0, 1): 1, (0, 2): 2,
-                            (1, 0): 3, (1, 1): 4, (1, 2): 5,
-                            (2, 0): 6, (2, 1): 7, (2, 2): 8}
-        self.win_combinations = [(0, 1, 2), (3, 4, 5), (6, 7, 8),
-                                 (0, 3, 6), (1, 4, 7), (2, 5, 8),
-                                 (0, 4, 8), (2, 4, 6)]
+        self.cell_size = cell_size
 
-    # Отрисовка
     def render(self):
         for y in range(self.height):
             for x in range(self.width):
-                pygame.draw.rect(self.screen, WHITE, (self.cell_size * x + 33,
-                                                      self.cell_size * y + 119,
-                                                      self.cell_size, self.cell_size), 2)
+                pygame.draw.rect(screen, WHITE, (self.cell_size * x + self.left,
+                                                 self.top + self.cell_size * y,
+                                                 self.cell_size, self.cell_size),
+                                 1)
 
-    # Обработка клика
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        return self.on_click(cell)
-
-    # Получаем клетку
-    def get_cell(self, mouse_pos):
-        return ((mouse_pos[0] - (self.left + 33)) // self.cell_size,
-                (mouse_pos[1] - (self.top + 119)) // self.cell_size)
-
-    # Проверка клика
-    def on_click(self, cell_coordinates):
-        if self.width > cell_coordinates[0] >= 0 and self.height > cell_coordinates[1] >= 0:
-            return cell_coordinates
-        else:
-            pass
-
-    # Ход игрока
-    def player_step(self, cell_coords):
-        coordinates = self.get_click(cell_coords)
-        if coordinates:
-            x, y = coordinates
-            for j in range(self.width):
-                for i in range(self.height):
-                    if j == x and i == y:
-                        if self.board[i][j] != "X" and self.board[i][j] != "O":
-                            self.board[i][j] = "X"
-                            self.step += 1
-                            return True
-                        else:
-                            return False
-        else:
-            pass
-
-    # Проверка выигрыша
-    def check_win(self):
-        for x in range(self.width):
-            for i, coord in enumerate(self.win_combinations):
-                y1, x1 = self.get_key(coord[0])
-                y2, x2 = self.get_key(coord[1])
-                y3, x3 = self.get_key(coord[2])
-                if self.board[x1][y1] == self.board[x2][y2] == self.board[x3][y3]:
-                    return self.board[x1][y1]
-        if self.step == 9:
-            return "draw"
-        return False
-
-    # Ход компьютера
-    def ai_step(self):  # artificial intellect`s step
-        x, y = self.get_key(random.randint(0, 8))
-        if self.board[x][y] != "X" and self.board[x][y] != "O":
-            self.board[x][y] = "O"
-            self.step += 1
-        else:
-            self.ai_step()
-
-    # Взятие ключа словаря по значению
-    def get_key(self, value_need):
-        for key, value in self.coord_ratio.items():
-            if value == value_need:
-                return key
+    def get_cell(self, pos):
+        return ((pos[0] - self.left) // self.cell_size,
+                (pos[1] - self.top) // self.cell_size)
 
 
 # Класс, описывающий кнопку
 class Button(pygame.sprite.Sprite):
-    def __init__(self, frame, x, y, text="", icon=pygame.Surface((0, 0))):
+    def __init__(self, frame, x, y, text="", text_size=60, icon=pygame.Surface((0, 0))):
         super(Button, self).__init__(buttons)
         self.frames = frame
         self.icon = icon
         self.image = frame
+        self.text_size = text_size
         self.standard_btn = frame
         self.width, self.height = self.image.get_width(), self.image.get_height()
         self.rect = self.image.get_rect()
@@ -143,7 +80,7 @@ class Button(pygame.sprite.Sprite):
     def update(self):
         self.image = self.frames
         if self.text:
-            set_text(self, self.text, 60)
+            set_text(self, self.text, self.text_size)
         if self.icon:
             self.set_icon()
 
@@ -175,3 +112,85 @@ class TextBox(pygame.sprite.Sprite):
     def set_position(self):
         self.rect.x = self.x
         self.rect.y = self.y
+
+
+class Shields(Board):
+    def __init__(self, width, height):
+        super(Shields, self).__init__(width, height)
+        self.width = width
+        self.height = height
+        self.board = {}
+        self.fill_board()
+
+    def fill_board(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                if x == 0 or y == 0 or y == 5 or x == 5:
+                    self.board[(x, y)] = {"shield": False, "points": 10}
+                elif x == 1 or y == 1 or y == 4 or x == 4:
+                    self.board[(x, y)] = {"shield": False, "points": 20}
+                else:
+                    self.board[(x, y)] = {"shield": False, "points": 40}
+
+    def render(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.board[(x, y)]["shield"]:
+                    screen.blit(pygame.transform.scale(icons["full_shield"], (25, 25)),
+                                (self.cell_size * x + self.left + 85, self.top + self.cell_size * y + 5))
+                else:
+                    bg_rect = pygame.rect.Rect(self.cell_size * x + self.left, self.top + self.cell_size * y,
+                                               self.cell_size, self.cell_size)
+                    pygame.draw.rect(screen, WHITE, bg_rect, 2)
+                pygame.draw.rect(screen, WHITE, (self.cell_size * x + self.left,
+                                                 self.top + self.cell_size * y,
+                                                 self.cell_size, self.cell_size),
+                                 2)
+                font_text = pygame.font.Font(FONT, 25)
+                text_result = font_text.render(str(self.board[(x, y)]["points"]), True, WHITE)
+                screen.blit(text_result,
+                            (self.cell_size * x + self.left + 5,
+                             self.top + self.cell_size * y))
+
+    def highlight_cell(self, pos):
+        x, y = self.get_cell(pos)
+        if 6 > x >= 0 and 6 > y >= 0:
+            pygame.draw.rect(screen, "#06FF94", (self.cell_size * x + self.left,
+                                                 self.top + self.cell_size * y,
+                                                 self.cell_size, self.cell_size),
+                             8)
+
+    def set_shield(self, pos):
+        x, y = self.get_cell(pos)
+        self.board[(x, y)]["shield"] = True
+
+    def remove_shield(self, pos):
+        x, y = self.get_cell(pos)
+        self.board[(x, y)]["shield"] = False
+
+    def check_shields(self, points):
+        if points == 10:
+            if self.get_count_shields(points) < 9:
+                return True
+            return False
+        elif points == 20:
+            if self.get_count_shields(points) < 7:
+                return True
+            return False
+        elif points == 40:
+            if self.get_count_shields(points) < 3:
+                return True
+            return False
+        return False
+
+    def get_shields(self):
+        return [value["points"]
+                for value in self.board.values()
+                if value["shield"]]
+
+    def get_count_shields(self, points):
+        return self.get_shields().count(points)
+
+    def get_points(self, pos):
+        if self.get_cell(pos) in self.board.keys():
+            return self.board[self.get_cell(pos)]["points"]

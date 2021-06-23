@@ -50,17 +50,19 @@ def cut_sheet(sheet, columns, rows, obj_width, obj_height):
 
 
 # Функция устанавливающая надпись на кнопке
-def set_text(surface, text, font_size=90, color=WHITE):
+def set_text(surface, text, font_size=90, color=WHITE, returnable=False):
     font_text = pygame.font.Font(FONT, font_size)
     text_result = font_text.render(text, True, color)
     screen.blit(text_result, text_result.get_rect(center=surface.rect.center))
+    if returnable:
+        return text_result.get_rect(center=surface.rect.center)
 
 
 # Затухание экрана (Передаётся задержка)
 def transition(delay=15):
     for size in range(40):
         black_rect = pygame.Surface((1280, 20 * size))  # - переход сверху - вниз
-        black_rect.fill(BLACK)
+        black_rect.fill(WHITE)
         screen.blit(black_rect, (black_rect.get_rect(center=screen.get_rect().center)))
         pygame.display.flip()
         pygame.time.delay(delay)
@@ -76,9 +78,19 @@ def check_hovered():
             btn.set_default_image()
 
 
+def blur_surface(surface, amt):
+    scale = 1.0 / float(amt)
+    surf_size = surface.get_size()
+    scale_size = (int(surf_size[0]*scale), int(surf_size[1]*scale))
+    surf = pygame.transform.smoothscale(surface, scale_size)
+    surf = pygame.transform.smoothscale(surf, surf_size)
+    return surf
+
+
 icon_sheet = cut_sheet(load_image("icon_sheet.png"), 4, 4, 65, 65)
 
 icons = {"settings": icon_sheet[0], "cup": icon_sheet[1], "empty_cross": icon_sheet[2],
-         "red_cross": icon_sheet[3], "black_cross": icon_sheet[4], "clock": icon_sheet[5],
+         "full_black_cross": icon_sheet[3], "black_cross": icon_sheet[4], "clock": icon_sheet[5],
          "empty_shield": icon_sheet[6], "full_shield": icon_sheet[7], "volume_off": icon_sheet[8],
-         "volume_down": icon_sheet[9], "volume_up": icon_sheet[10]}
+         "volume_down": icon_sheet[9], "volume_up": icon_sheet[10], "pause": icon_sheet[11],
+         "help": icon_sheet[12]}
