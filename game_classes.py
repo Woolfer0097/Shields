@@ -155,7 +155,7 @@ class Shields(Board):
     def highlight_cell(self, pos):
         x, y = self.get_cell(pos)
         if 6 > x >= 0 and 6 > y >= 0:
-            pygame.draw.rect(screen, "#06FF94", (self.cell_size * x + self.left,
+            pygame.draw.rect(screen, "#21D19F", (self.cell_size * x + self.left,
                                                  self.top + self.cell_size * y,
                                                  self.cell_size, self.cell_size),
                              8)

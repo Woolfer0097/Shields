@@ -1,0 +1,1 @@
+pyinstaller --onefile --noconsole --name shields.exe --icon=./data/icon.ico main.py
