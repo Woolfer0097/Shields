@@ -96,7 +96,7 @@ def show_tip(surface, text):
 icon_sheet = cut_sheet(load_image("icon_sheet.png"), 4, 4, 65, 65)
 
 icons = {"settings": icon_sheet[0], "cup": icon_sheet[1], "empty_cross": icon_sheet[2],
-         "full_black_cross": icon_sheet[3], "black_cross": icon_sheet[4], "clock": icon_sheet[5],
+         "full_black_cross": icon_sheet[3], "full_cross": icon_sheet[4], "clock": icon_sheet[5],
          "empty_shield": icon_sheet[6], "full_shield": icon_sheet[7], "volume_off": icon_sheet[8],
          "volume_down": icon_sheet[9], "volume_up": icon_sheet[10], "pause": icon_sheet[11],
          "help": icon_sheet[12], "continue": icon_sheet[13]}

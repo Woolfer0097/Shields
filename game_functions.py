@@ -110,7 +110,7 @@ def start_screen():
 def game(player1, player2):
     board = Shields(6, 6)
     volume = 0.2
-    count_steps = 20
+    count_steps = 17
     settings_flag = False
     help_flag = False
     action = {"player": player1, "action": "defence"}
@@ -194,7 +194,7 @@ def game(player1, player2):
                         if event.button == 3:
                             board.remove_shield(event.pos)
                         elif event.button == 1:
-                            if board.check_shields(board.get_points(event.pos)):
+                            if board.check_count_shields(board.get_points(event.pos)):
                                 board.set_shield(event.pos)
                     elif event.type == pygame.MOUSEBUTTONUP:
                         if pause_btn.on_hovered(event.pos):
@@ -244,11 +244,13 @@ def game(player1, player2):
                                 game_data[player1]["player_board"] = board.board
                                 board.fill_board()
                                 action["player"] = player2
+                                transition()
                             else:
                                 game_data[player2]["player_board"] = board.board
                                 board.board = game_data[player2]["player_board"]
                                 action["player"] = player1
                                 action["action"] = "attack"
+                                transition()
                     if continue_btn.on_hovered(pygame.mouse.get_pos()):
                         show_tip(continue_btn, "Продолжить")
                 check_hovered()
@@ -264,29 +266,38 @@ def game(player1, player2):
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         terminate()
-                    elif event.type == pygame.MOUSEBUTTONDOWN:
-                        if event.button == 3:
-                            board.remove_shield(event.pos)
-                        elif event.button == 1:
-                            if board.check_shields(board.get_points(event.pos)):
-                                board.set_shield(event.pos)
                     elif event.type == pygame.MOUSEBUTTONUP:
+                        if event.button == 1 and count_steps != 0:
+                            if board.get_cell(event.pos):
+                                if not board.check_shield(event.pos):
+                                    if board.get_points(event.pos):
+                                        board.highlight_cell(event.pos)
+                                        pygame.time.delay(300)
+                                        game_data[action['player']]['score'] += board.get_points(event.pos)
+                                        board.set_attacked(event.pos, True)
+                                board.highlight_cell(event.pos, pygame.Color("red"))
+                                pygame.time.delay(300)
+                                board.set_attacked(event.pos, False)
+                                count_steps -= 1
                         if pause_btn.on_hovered(event.pos):
                             settings_flag = True
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_SPACE:
-                            print(board.board)
+                    # Печать "отладочной информации" об игроках в формате .json
+                    # elif event.type == pygame.KEYDOWN:
+                    #     if event.key == pygame.K_SPACE:
+                    #         print(board.board)
                 screen.fill("#D8DDEF")
 
                 flipped_mark = pygame.transform.flip(wall_mark, True, False)
-                text_box_score_title = TextBox(flipped_mark, 1040, 210)
+                text_box_steps_title = TextBox(flipped_mark, 1040, 174)
+                text_box_steps = TextBox(flipped_mark, 1040, 274)
+                text_box_score_title = TextBox(flipped_mark, 1040, 374)
+                text_box_score = TextBox(flipped_mark, 1040, 474)
+                screen.blit(flipped_mark, (1040, 274))
+                screen.blit(flipped_mark, (1040, 474))
                 set_text(text_box_score_title, "СЧЁТ:", 30)
-                text_box_score = TextBox(flipped_mark, 1040, 310)
-                screen.blit(flipped_mark, (1040, 210))
-                screen.blit(flipped_mark, (1040, 310))
-                c10, c20, c40 = board.get_count_shields(10), board.get_count_shields(20), board.get_count_shields(40)
-                first, second, third = MAX_F - c10, MAX_S - c20, MAX_T - c40
                 set_text(text_box_score, f"{game_data[action['player']]['score']}", 40)
+                set_text(text_box_steps_title, "ОСТАЛОСТЬ ХОДОВ:", 20)
+                set_text(text_box_steps, f"{count_steps}", 40)
 
                 text_box_action_title = TextBox(wall_mark, 0, 174)
                 text_box_action = TextBox(wall_mark, 0, 274)
@@ -295,23 +306,28 @@ def game(player1, player2):
                 screen.blit(wall_mark, (0, 274))
                 screen.blit(wall_mark, (0, 474))
                 set_text(text_box_action_title, "ДЕЙСТВИЕ:", 40)
-                set_text(text_box_nickname_title, "ИМЯ:", 40)
                 set_text(text_box_action, "АТАКА", 30)
+                set_text(text_box_nickname_title, "ИМЯ:", 40)
                 set_text(text_box_nickname, action["player"], 30)
 
-                board.render()
+                board.render(attack=True)
                 mouse_pos = pygame.mouse.get_pos()
                 if board.get_cell(mouse_pos):
                     board.highlight_cell(mouse_pos)
-                if count_steps == 0:
+                if action["player"] == player2:
                     continue_btn = Button(icons["continue"], 1196, 640)
                     pressed = pygame.mouse.get_pressed()
                     if pressed[0]:
                         if continue_btn.on_hovered(pygame.mouse.get_pos()):
-                            board.board = game_data[player1]["player_board"]
-                            action["player"] = player2
+                            transition()
+                            return
                     if continue_btn.on_hovered(pygame.mouse.get_pos()):
                         show_tip(continue_btn, "Продолжить")
+                if count_steps == 0:
+                    board.board = game_data[player1]["player_board"]
+                    action["player"] = player2
+                    count_steps = 17
+                    transition()
                 check_hovered()
                 # Отрисовка
                 buttons.draw(screen)
@@ -401,3 +417,11 @@ def open_help():
         buttons.update()
         pygame.display.flip()
         clock.tick(FPS)
+
+
+def end_screen():
+    pass
+
+
+def warning_window():
+    pass

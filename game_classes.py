@@ -126,18 +126,26 @@ class Shields(Board):
         for y in range(self.height):
             for x in range(self.width):
                 if x == 0 or y == 0 or y == 5 or x == 5:
-                    self.board[(x, y)] = {"shield": False, "points": 10}
+                    self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 10}
                 elif x == 1 or y == 1 or y == 4 or x == 4:
-                    self.board[(x, y)] = {"shield": False, "points": 20}
+                    self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 20}
                 else:
-                    self.board[(x, y)] = {"shield": False, "points": 40}
+                    self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 40}
 
-    def render(self):
+    def render(self, attack=False):
         for y in range(self.height):
             for x in range(self.width):
-                if self.board[(x, y)]["shield"]:
+                if self.board[(x, y)]["shield"] and not attack:
                     screen.blit(pygame.transform.scale(icons["full_shield"], (25, 25)),
                                 (self.cell_size * x + self.left + 85, self.top + self.cell_size * y + 5))
+                if attack:
+                    # Если клетка атакована и игрок не попал по щиту
+                    if self.board[(x, y)]["attacked"][0] and not self.board[(x, y)]["attacked"][1]:
+                        screen.blit(pygame.transform.scale(icons["full_cross"], (25, 25)),
+                                    (self.cell_size * x + self.left + 85, self.top + self.cell_size * y + 5))
+                    elif self.board[(x, y)]["attacked"][0] and self.board[(x, y)]["attacked"][1]:
+                        screen.blit(pygame.transform.scale(icons["empty_cross"], (25, 25)),
+                                    (self.cell_size * x + self.left + 85, self.top + self.cell_size * y + 5))
                 else:
                     bg_rect = pygame.rect.Rect(self.cell_size * x + self.left, self.top + self.cell_size * y,
                                                self.cell_size, self.cell_size)
@@ -152,23 +160,53 @@ class Shields(Board):
                             (self.cell_size * x + self.left + 5,
                              self.top + self.cell_size * y))
 
-    def highlight_cell(self, pos):
+    def highlight_cell(self, pos, color="#21D19F"):
         x, y = self.get_cell(pos)
         if 6 > x >= 0 and 6 > y >= 0:
-            pygame.draw.rect(screen, "#21D19F", (self.cell_size * x + self.left,
-                                                 self.top + self.cell_size * y,
-                                                 self.cell_size, self.cell_size),
+            pygame.draw.rect(screen, color, (self.cell_size * x + self.left,
+                                             self.top + self.cell_size * y,
+                                             self.cell_size, self.cell_size),
                              8)
 
     def set_shield(self, pos):
         x, y = self.get_cell(pos)
         self.board[(x, y)]["shield"] = True
 
+    def set_attacked(self, pos, is_damaged):
+        x, y = self.get_cell(pos)
+        if 6 > x >= 0 and 6 > y >= 0:
+            if is_damaged:
+                self.board[(x, y)]["attacked"] = (True, True)
+            else:
+                self.board[(x, y)]["attacked"] = (True, False)
+
     def remove_shield(self, pos):
         x, y = self.get_cell(pos)
         self.board[(x, y)]["shield"] = False
 
-    def check_shields(self, points):
+    def get_shields_points(self):
+        return [value["points"]
+                for value in self.board.values()
+                if value["shield"]]
+
+    def get_shields_coordinates(self):
+        return [key
+                for key, value in self.board.items()
+                if value["shield"]]
+
+    def get_count_shields(self, points):
+        return self.get_shields_points().count(points)
+
+    def get_points(self, pos):
+        if self.get_cell(pos) in self.board.keys():
+            return self.board[self.get_cell(pos)]["points"]
+
+    def check_shield(self, pos):
+        if self.get_cell(pos) in self.get_shields_coordinates():
+            return True
+        return False
+
+    def check_count_shields(self, points):
         if points == 10:
             if self.get_count_shields(points) < 9:
                 return True
@@ -182,15 +220,3 @@ class Shields(Board):
                 return True
             return False
         return False
-
-    def get_shields(self):
-        return [value["points"]
-                for value in self.board.values()
-                if value["shield"]]
-
-    def get_count_shields(self, points):
-        return self.get_shields().count(points)
-
-    def get_points(self, pos):
-        if self.get_cell(pos) in self.board.keys():
-            return self.board[self.get_cell(pos)]["points"]
