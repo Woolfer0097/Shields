@@ -85,18 +85,36 @@ class Button(pygame.sprite.Sprite):
             self.set_icon()
 
 
-# Класс, описывающий выборочный список
-class Selector(pygame.sprite.Sprite):
-    #                  x  y  Список элементов списка
-    def __init__(self, x, y, item_list):
-        super(Selector, self).__init__(all_sprites)
-        self.x = x
-        self.y = y
-        self.item_list = item_list
+# Класс описывающий частицу
+class Particle(pygame.sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = [star_particle]
+    for scale in (5, 10, 20, 30):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
 
-    def next_item(self):
-        screen.blit()
-        return self.item_list
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_sprites)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость — это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+
+        # гравитация будет одинаковой (значение константы)
+        self.gravity = GRAVITY
+
+    def update(self):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect(screen.get_rect()):
+            self.kill()
 
 
 # Класс, описывающий Поле для ввода текста
@@ -132,6 +150,16 @@ class Shields(Board):
                 else:
                     self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 40}
 
+    def fill_board_ai(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                if x == 0 or y == 0 or y == 5 or x == 5:
+                    self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 10}
+                elif x == 1 or y == 1 or y == 4 or x == 4:
+                    self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 20}
+                else:
+                    self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 40}
+
     def render(self, attack=False):
         for y in range(self.height):
             for x in range(self.width):
@@ -140,12 +168,13 @@ class Shields(Board):
                                 (self.cell_size * x + self.left + 85, self.top + self.cell_size * y + 5))
                 if attack:
                     # Если клетка атакована и игрок не попал по щиту
-                    if self.board[(x, y)]["attacked"][0] and not self.board[(x, y)]["attacked"][1]:
-                        screen.blit(pygame.transform.scale(icons["full_cross"], (25, 25)),
-                                    (self.cell_size * x + self.left + 85, self.top + self.cell_size * y + 5))
-                    elif self.board[(x, y)]["attacked"][0] and self.board[(x, y)]["attacked"][1]:
-                        screen.blit(pygame.transform.scale(icons["empty_cross"], (25, 25)),
-                                    (self.cell_size * x + self.left + 85, self.top + self.cell_size * y + 5))
+                    if self.board[(x, y)]["attacked"][0]:
+                        if self.board[(x, y)]["attacked"][1]:
+                            screen.blit(pygame.transform.scale(icons["empty_cross"], (25, 25)),
+                                        (self.cell_size * x + self.left + 85, self.top + self.cell_size * y + 5))
+                        if not self.board[(x, y)]["attacked"][1]:
+                            screen.blit(pygame.transform.scale(icons["full_cross"], (25, 25)),
+                                        (self.cell_size * x + self.left + 85, self.top + self.cell_size * y + 5))
                 else:
                     bg_rect = pygame.rect.Rect(self.cell_size * x + self.left, self.top + self.cell_size * y,
                                                self.cell_size, self.cell_size)
@@ -194,6 +223,11 @@ class Shields(Board):
                 for key, value in self.board.items()
                 if value["shield"]]
 
+    def get_attacked_coordinates(self):
+        return [key
+                for key, value in self.board.items()
+                if value["attacked"][0]]
+
     def get_count_shields(self, points):
         return self.get_shields_points().count(points)
 
@@ -203,6 +237,11 @@ class Shields(Board):
 
     def check_shield(self, pos):
         if self.get_cell(pos) in self.get_shields_coordinates():
+            return True
+        return False
+
+    def check_attacked(self, pos):
+        if self.get_cell(pos) not in self.get_attacked_coordinates():
             return True
         return False
 

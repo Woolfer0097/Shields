@@ -60,6 +60,9 @@ def set_text(surface, text, font_size=90, color=WHITE, returnable=False):
 
 # Затухание экрана (Передаётся задержка)
 def transition(delay=15):
+    transition_sound = pygame.mixer.Sound("./data/sounds/transition_sound.wav")
+    transition_sound.set_volume(0.1)
+    transition_sound.play()
     for size in range(40):
         black_rect = pygame.Surface((1280, 20 * size))  # - переход сверху - вниз
         black_rect.fill(WHITE)

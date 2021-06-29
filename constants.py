@@ -4,9 +4,9 @@ from libraries import *
 # Константы для игры:
 ACCEPTED_SYMBOLS = "abcdefghijklmnopqrstuvwxyz" \
                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-                   "абвгдеёжзийклмнопрстуфхцчшщъыьэюя" \
-                   "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ" \
-                   "0123456789 _"  # Символы которые игрок может вписывать в поле ввода имени
+                   "0123456789_"  # Символы которые игрок может вписывать в поле ввода имени
+RUS_SYMBOLS = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя" \
+              "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
 SCREEN_WIDTH, SCREEN_HEIGHT = SCREEN_SIZE = 1280, 720  # Размеры экрана
 FPS = 60  # Кадры в секунду (Frame Per Second)
 FONT = "./data/fonts/Proxima_Nova.ttf"  # Шрифт
@@ -18,3 +18,4 @@ MAX_F, MAX_S, MAX_T = 9, 7, 3  # Максимальное кол-во щитов
 COLOR_INACTIVE = "#7293A0"  # Цвет неактивности поля
 COLOR_ACTIVE = "#21D19F"  # Цвет активности поля
 LIMIT_SYMBOLS = 14
+GRAVITY = 1

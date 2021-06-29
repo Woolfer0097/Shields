@@ -35,7 +35,7 @@ def start_screen():
                 volume_down_btn = Button(icons["volume_down"], 554, 300)
                 volume_up_btn = Button(icons["volume_up"], 658, 300)
                 help_btn = Button(icons["help"], 775, 303)
-                return_btn = Button(icons["black_cross"], 854, 130)
+                return_btn = Button(icons["full_cross"], 854, 130)
                 sound_textbox = TextBox(settings_window, 394, 250)
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -65,7 +65,7 @@ def start_screen():
                 screen.blit(blur_surface(screen, 40), (0, 0))
                 screen.blit(settings_window, (394, 162))
                 buttons.draw(screen)
-                set_text(sound_textbox, f"{int(volume * 100)}", 50)
+                set_text(sound_textbox, f"{int(pygame.mixer.music.get_volume() * 100)}", 50)
                 buttons.update()
                 # Отрисовка
                 pygame.display.flip()
@@ -108,13 +108,14 @@ def start_screen():
 
 
 def game(player1, player2):
+    # Инициализация доски
     board = Shields(6, 6)
     volume = 0.2
     count_steps = 17
     settings_flag = False
     help_flag = False
     action = {"player": player1, "action": "defence"}
-    game_data = {player1: {"player_board": [], "score": 0}, player2: {"player_board": [], "score": 0}}
+    game_data = {player1: {"player_board": {}, "score": 0}, player2: {"player_board": {}, "score": 0}}
     while True:
         if settings_flag:
             # Настройки
@@ -143,7 +144,7 @@ def game(player1, player2):
                 volume_down_btn = Button(icons["volume_down"], 554, 262)
                 volume_up_btn = Button(icons["volume_up"], 658, 262)
                 help_btn = Button(icons["help"], 775, 265)
-                return_btn = Button(icons["black_cross"], 854, 130)
+                return_btn = Button(icons["full_cross"], 854, 130)
                 quit_btn = Button(medium_button, 449, 439, "Главное меню", 50)
                 sound_textbox = TextBox(settings_window, 394, 180)
                 for event in pygame.event.get():
@@ -177,7 +178,7 @@ def game(player1, player2):
                 screen.blit(blur_surface(screen, 40), (0, 0))
                 screen.blit(settings_window, (394, 162))
                 buttons.draw(screen)
-                set_text(sound_textbox, f"{int(volume * 100)}", 50)
+                set_text(sound_textbox, f"{int(pygame.mixer.music.get_volume() * 100)}", 50)
                 buttons.update()
                 # Отрисовка
                 pygame.display.flip()
@@ -268,17 +269,18 @@ def game(player1, player2):
                         terminate()
                     elif event.type == pygame.MOUSEBUTTONUP:
                         if event.button == 1 and count_steps != 0:
-                            if board.get_cell(event.pos):
+                            if board.get_cell(event.pos) and board.check_attacked(event.pos):
                                 if not board.check_shield(event.pos):
                                     if board.get_points(event.pos):
-                                        board.highlight_cell(event.pos)
-                                        pygame.time.delay(300)
+                                        print(board.board)
                                         game_data[action['player']]['score'] += board.get_points(event.pos)
                                         board.set_attacked(event.pos, True)
-                                board.highlight_cell(event.pos, pygame.Color("red"))
-                                pygame.time.delay(300)
-                                board.set_attacked(event.pos, False)
-                                count_steps -= 1
+                                        count_steps -= 1
+                                        success_sound.play()
+                                else:
+                                    board.set_attacked(event.pos, False)
+                                    fail_sound.play()
+                                    count_steps -= 1
                         if pause_btn.on_hovered(event.pos):
                             settings_flag = True
                     # Печать "отладочной информации" об игроках в формате .json
@@ -314,16 +316,19 @@ def game(player1, player2):
                 mouse_pos = pygame.mouse.get_pos()
                 if board.get_cell(mouse_pos):
                     board.highlight_cell(mouse_pos)
-                if action["player"] == player2:
+                if count_steps == 0 and action["player"] == player2:
                     continue_btn = Button(icons["continue"], 1196, 640)
                     pressed = pygame.mouse.get_pressed()
                     if pressed[0]:
                         if continue_btn.on_hovered(pygame.mouse.get_pos()):
                             transition()
-                            return
+                            if game_data[player1]["score"] > game_data[player2]["score"]:
+                                end_screen(player1)
+                            else:
+                                end_screen(player2)
                     if continue_btn.on_hovered(pygame.mouse.get_pos()):
                         show_tip(continue_btn, "Продолжить")
-                if count_steps == 0:
+                if count_steps == 0 and action["player"] == player1:
                     board.board = game_data[player1]["player_board"]
                     action["player"] = player2
                     count_steps = 17
@@ -355,11 +360,14 @@ def ask_names():
                     active_box = 2
             elif event.type == pygame.MOUSEBUTTONUP:
                 if play_btn.on_hovered(event.pos):
-                    return text_input_player1, text_input_player2
+                    if text_input_player1 == text_input_player2:
+                        warning_window("Имена должны быть разными.")
+                    else:
+                        return text_input_player1, text_input_player2
             elif event.type == pygame.KEYDOWN:
                 if active_box == 1:
-                    if text_input_player1:
-                        if event.key == pygame.K_RETURN:
+                    if event.key == pygame.K_RETURN:
+                        if text_input_player1:
                             active_box = 2
                     if event.key == pygame.K_BACKSPACE:
                         text_input_player1 = text_input_player1[:-1]
@@ -367,26 +375,31 @@ def ask_names():
                         if len(text_input_player1) <= LIMIT_SYMBOLS:
                             if event.unicode in ACCEPTED_SYMBOLS:
                                 text_input_player1 += event.unicode
+                            elif event.unicode in RUS_SYMBOLS:
+                                warning_window("Смените раскладку клавиатуры")
                 else:
-                    if text_input_player1 and text_input_player2:
-                        if event.key == pygame.K_RETURN:
-                            return text_input_player1, text_input_player2
                     if event.key == pygame.K_BACKSPACE:
                         text_input_player2 = text_input_player2[:-1]
                     else:
                         if len(text_input_player2) <= LIMIT_SYMBOLS:
-                            text_input_player2 += event.unicode
+                            if event.unicode in ACCEPTED_SYMBOLS:
+                                text_input_player2 += event.unicode
+                            elif event.unicode in RUS_SYMBOLS:
+                                warning_window("Смените раскладку клавиатуры")
+
         screen.blit(ask_bg, (0, 0))
         screen.blit(input_box_frame, (52, 310))
         screen.blit(input_box_frame, (833, 310))
+        set_text(player1_name, text_input_player1, font_size=30, color=COLOR_INACTIVE)
+        set_text(player2_name, text_input_player2, font_size=30, color=COLOR_INACTIVE)
         if active_box == 1:
-            text_rect = set_text(player1_name, text_input_player1, font_size=30, color=COLOR_ACTIVE, returnable=True)
+            text_rect = set_text(player1_name, text_input_player1,
+                                 font_size=30, color=COLOR_ACTIVE, returnable=True)
             pygame.draw.line(screen, COLOR_INACTIVE, (text_rect.right, text_rect.y),
                              (text_rect.right, text_rect.y + 30), 2)
-            set_text(player2_name, text_input_player2, font_size=30, color=COLOR_INACTIVE)
         else:
-            set_text(player1_name, text_input_player1, font_size=30, color=COLOR_INACTIVE)
-            text_rect = set_text(player2_name, text_input_player2, font_size=30, color=COLOR_ACTIVE, returnable=True)
+            text_rect = set_text(player2_name, text_input_player2,
+                                 font_size=30, color=COLOR_ACTIVE, returnable=True)
             pygame.draw.line(screen, COLOR_INACTIVE, (text_rect.right, text_rect.y),
                              (text_rect.right, text_rect.y + 30), 2)
         if text_input_player1 and text_input_player2:
@@ -419,9 +432,55 @@ def open_help():
         clock.tick(FPS)
 
 
-def end_screen():
-    pass
+def create_particles(position, particle_count=20):
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers))
 
 
-def warning_window():
+def end_screen(winner_name):
+    timer = 0
+    buttons.empty()
+    all_sprites.empty()
+    quit_btn = Button(medium_button, 449, 539, "Главное меню", 50)
+    text_surf = pygame.Surface((1234, 345))
+    text_surf.fill("#6194a2")
+    text_box = TextBox(text_surf, 23, 22)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if quit_btn.on_hovered(event.pos):
+                    start_screen()
+                create_particles(event.pos, 100)
+        screen.fill("#6194a2")
+        timer += 1
+        check_hovered()
+        if timer % 30 == 0:
+            for i in range(random.randint(1, 5)):
+                create_particles((random.randint(0, SCREEN_WIDTH - 200), random.randint(0, SCREEN_HEIGHT - 200)), 20)
+        all_sprites.draw(screen)
+        all_sprites.update()
+        set_text(text_box, f"ПОБЕДИЛ ИГРОК {winner_name}!", font_size=65)
+        # Отрисовка
+        buttons.draw(screen)
+        buttons.update()
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def warning_window(error):
+    warning_sound.play()
+    text_surf = pygame.Surface((400, 70))
+    warning_textbox = TextBox(text_surf, 482, 325)
+    screen.blit(warning_bg, (389, 314))
+    set_text(warning_textbox, error, font_size=20)
+    pygame.display.flip()
+    clock.tick(FPS)
+    pygame.time.delay(2000)
+
+
+def extend_leaderboard(player1, player2):
     pass
