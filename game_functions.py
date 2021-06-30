@@ -111,11 +111,11 @@ def game(player1, player2):
     # Инициализация доски
     board = Shields(6, 6)
     volume = 0.2
-    count_steps = 17
     settings_flag = False
     help_flag = False
     action = {"player": player1, "action": "defence"}
-    game_data = {player1: {"player_board": {}, "score": 0}, player2: {"player_board": {}, "score": 0}}
+    game_data = {player1: {"player_board": {}, "count_steps": 17, "score": 0},
+                 player2: {"player_board": {}, "count_steps": 17, "score": 0}}
     while True:
         if settings_flag:
             # Настройки
@@ -268,19 +268,19 @@ def game(player1, player2):
                     if event.type == pygame.QUIT:
                         terminate()
                     elif event.type == pygame.MOUSEBUTTONUP:
-                        if event.button == 1 and count_steps != 0:
+                        if event.button == 1 and game_data[action['player']]["count_steps"] != 0:
                             if board.get_cell(event.pos) and board.check_attacked(event.pos):
                                 if not board.check_shield(event.pos):
                                     if board.get_points(event.pos):
                                         print(board.board)
                                         game_data[action['player']]['score'] += board.get_points(event.pos)
                                         board.set_attacked(event.pos, True)
-                                        count_steps -= 1
+                                        game_data[action['player']]["count_steps"] -= 1
                                         success_sound.play()
                                 else:
                                     board.set_attacked(event.pos, False)
                                     fail_sound.play()
-                                    count_steps -= 1
+                                    game_data[action['player']]["count_steps"] -= 1
                         if pause_btn.on_hovered(event.pos):
                             settings_flag = True
                     # Печать "отладочной информации" об игроках в формате .json
@@ -299,7 +299,7 @@ def game(player1, player2):
                 set_text(text_box_score_title, "СЧЁТ:", 30)
                 set_text(text_box_score, f"{game_data[action['player']]['score']}", 40)
                 set_text(text_box_steps_title, "ОСТАЛОСТЬ ХОДОВ:", 20)
-                set_text(text_box_steps, f"{count_steps}", 40)
+                set_text(text_box_steps, f"{game_data[action['player']]['count_steps']}", 40)
 
                 text_box_action_title = TextBox(wall_mark, 0, 174)
                 text_box_action = TextBox(wall_mark, 0, 274)
@@ -316,7 +316,7 @@ def game(player1, player2):
                 mouse_pos = pygame.mouse.get_pos()
                 if board.get_cell(mouse_pos):
                     board.highlight_cell(mouse_pos)
-                if count_steps == 0 and action["player"] == player2:
+                if game_data[action['player']]["count_steps"] == 0 and action["player"] == player2:
                     continue_btn = Button(icons["continue"], 1196, 640)
                     pressed = pygame.mouse.get_pressed()
                     if pressed[0]:
@@ -324,14 +324,15 @@ def game(player1, player2):
                             transition()
                             if game_data[player1]["score"] > game_data[player2]["score"]:
                                 end_screen(player1)
+                                return
                             else:
                                 end_screen(player2)
+                                return
                     if continue_btn.on_hovered(pygame.mouse.get_pos()):
                         show_tip(continue_btn, "Продолжить")
-                if count_steps == 0 and action["player"] == player1:
-                    board.board = game_data[player1]["player_board"]
+                if game_data[action['player']]["count_steps"] == 0 and action["player"] == player1:
+                    board.set_board(game_data[player1]["player_board"])
                     action["player"] = player2
-                    count_steps = 17
                     transition()
                 check_hovered()
                 # Отрисовка
@@ -362,13 +363,19 @@ def ask_names():
                 if play_btn.on_hovered(event.pos):
                     if text_input_player1 == text_input_player2:
                         warning_window("Имена должны быть разными.")
+                    if len(text_input_player1) < MIN_LIMIT_SYMBOLS or len(text_input_player2) < MIN_LIMIT_SYMBOLS:
+                        warning_window(f"Минимум {MIN_LIMIT_SYMBOLS} символа в имени")
                     else:
                         return text_input_player1, text_input_player2
             elif event.type == pygame.KEYDOWN:
                 if active_box == 1:
                     if event.key == pygame.K_RETURN:
                         if text_input_player1:
-                            active_box = 2
+                            if len(text_input_player1) < MIN_LIMIT_SYMBOLS or \
+                                    len(text_input_player2) < MIN_LIMIT_SYMBOLS:
+                                warning_window(f"Минимум {MIN_LIMIT_SYMBOLS} символа в имени")
+                            else:
+                                active_box = 2
                     if event.key == pygame.K_BACKSPACE:
                         text_input_player1 = text_input_player1[:-1]
                     else:
@@ -440,9 +447,11 @@ def create_particles(position, particle_count=20):
 
 
 def end_screen(winner_name):
+    win_sound.play()
     timer = 0
     buttons.empty()
     all_sprites.empty()
+    screen.fill("#6194a2")
     quit_btn = Button(medium_button, 449, 539, "Главное меню", 50)
     text_surf = pygame.Surface((1234, 345))
     text_surf.fill("#6194a2")
@@ -453,7 +462,7 @@ def end_screen(winner_name):
                 terminate()
             elif event.type == pygame.MOUSEBUTTONUP:
                 if quit_btn.on_hovered(event.pos):
-                    start_screen()
+                    return
                 create_particles(event.pos, 100)
         screen.fill("#6194a2")
         timer += 1
@@ -484,3 +493,41 @@ def warning_window(error):
 
 def extend_leaderboard(player1, player2):
     pass
+
+
+# {(0, 0): {'shield': False, 'attacked': (True, True), 'points': 10},
+# (1, 0): {'shield': True, 'attacked': (True, False), 'points': 10},
+# (2, 0): {'shield': True, 'attacked': (True, False), 'points': 10},
+# (3, 0): {'shield': False, 'attacked': (True, True), 'points': 10},
+# (4, 0): {'shield': False, 'attacked': (True, True), 'points': 10},
+# (5, 0): {'shield': False, 'attacked': (True, True), 'points': 10},
+# (0, 1): {'shield': False, 'attacked': (True, True), 'points': 10},
+# (1, 1): {'shield': False, 'attacked': (False, False), 'points': 20},
+# (2, 1): {'shield': False, 'attacked': (True, True), 'points': 20},
+# (3, 1): {'shield': False, 'attacked': (True, True), 'points': 20},
+# (4, 1): {'shield': True, 'attacked': (False, False), 'points': 20},
+# (5, 1): {'shield': True, 'attacked': (True, False), 'points': 10},
+# (0, 2): {'shield': True, 'attacked': (True, False), 'points': 10},
+# (1, 2): {'shield': True, 'attacked': (False, False), 'points': 20},
+# (2, 2): {'shield': True, 'attacked': (True, False), 'points': 40},
+# (3, 2): {'shield': True, 'attacked': (True, False), 'points': 40},
+# (4, 2): {'shield': False, 'attacked': (True, True), 'points': 20},
+# (5, 2): {'shield': True, 'attacked': (True, False), 'points': 10},
+# (0, 3): {'shield': False, 'attacked': (False, False), 'points': 10},
+# (1, 3): {'shield': True, 'attacked': (False, False), 'points': 20},
+# (2, 3): {'shield': False, 'attacked': (True, True), 'points': 40},
+# (3, 3): {'shield': True, 'attacked': (True, False), 'points': 40},
+# (4, 3): {'shield': False, 'attacked': (True, True), 'points': 20},
+# (5, 3): {'shield': False, 'attacked': (True, True), 'points': 10},
+# (0, 4): {'shield': False, 'attacked': (False, False), 'points': 10},
+# (1, 4): {'shield': True, 'attacked': (False, False), 'points': 20},
+# (2, 4): {'shield': True, 'attacked': (False, False), 'points': 20},
+# (3, 4): {'shield': True, 'attacked': (False, False), 'points': 20},
+# (4, 4): {'shield': True, 'attacked': (True, False), 'points': 20},
+# (5, 4): {'shield': True, 'attacked': (True, False), 'points': 10},
+# (0, 5): {'shield': False, 'attacked': (False, False), 'points': 10},
+# (1, 5): {'shield': True, 'attacked': (False, False), 'points': 10},
+# (2, 5): {'shield': False, 'attacked': (False, False), 'points': 10},
+# (3, 5): {'shield': True, 'attacked': (False, False), 'points': 10},
+# (4, 5): {'shield': False, 'attacked': (True, True), 'points': 10},
+# (5, 5): {'shield': True, 'attacked': (True, False), 'points': 10}}

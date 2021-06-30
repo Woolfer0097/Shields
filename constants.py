@@ -19,3 +19,4 @@ COLOR_INACTIVE = "#7293A0"  # Цвет неактивности поля
 COLOR_ACTIVE = "#21D19F"  # Цвет активности поля
 LIMIT_SYMBOLS = 14
 GRAVITY = 1
+MIN_LIMIT_SYMBOLS = 4

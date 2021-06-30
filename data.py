@@ -19,6 +19,8 @@ success_sound = pygame.mixer.Sound("./data/sounds/success_sound.wav")
 success_sound.set_volume(0.05)
 fail_sound = pygame.mixer.Sound("./data/sounds/fail_sound.wav")
 fail_sound.set_volume(0.05)
+win_sound = pygame.mixer.Sound("./data/sounds/win_sound.wav")
+win_sound.set_volume(0.2)
 
 with open("./data/game_data.json") as raw_data:
     load_data = raw_data.read()

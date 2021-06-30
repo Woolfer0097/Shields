@@ -150,15 +150,8 @@ class Shields(Board):
                 else:
                     self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 40}
 
-    def fill_board_ai(self):
-        for y in range(self.height):
-            for x in range(self.width):
-                if x == 0 or y == 0 or y == 5 or x == 5:
-                    self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 10}
-                elif x == 1 or y == 1 or y == 4 or x == 4:
-                    self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 20}
-                else:
-                    self.board[(x, y)] = {"shield": False, "attacked": (False, False), "points": 40}
+    def set_board(self, board):
+        self.board = board.copy()
 
     def render(self, attack=False):
         for y in range(self.height):
