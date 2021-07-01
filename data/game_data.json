@@ -1,6 +1,47 @@
 [
-  {
-    "nickname": "Woolfer0097",
-    "max_score": 0
-  }
+    {
+        "nickname": "Woolfer0097",
+        "max_score": 230,
+        "games_count": 23
+    },
+    {
+        "nickname": "NOOB",
+        "max_score": 120,
+        "games_count": 3
+    },
+    {
+        "nickname": "PROGAMER228",
+        "max_score": 20,
+        "games_count": 2
+    },
+    {
+        "nickname": "Hacker",
+        "max_score": 19,
+        "games_count": -1
+    },
+    {
+        "nickname": "Admin",
+        "max_score": 999,
+        "games_count": 999
+    },
+    {
+        "nickname": "Maxim123",
+        "max_score": 230,
+        "games_count": 1
+    },
+    {
+        "nickname": "Superman",
+        "max_score": 210,
+        "games_count": 20
+    },
+    {
+        "nickname": "Genius",
+        "max_score": 260,
+        "games_count": 1
+    },
+    {
+        "nickname": "Winner",
+        "max_score": 230,
+        "games_count": 23
+    }
 ]
