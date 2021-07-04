@@ -73,6 +73,7 @@ def start_screen():
                 clock.tick(FPS)
         elif rating_flag:
             buttons.empty()
+            info_label.update_data()
             return_btn = Button(icons["full_cross"], 1215, 0)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -84,7 +85,7 @@ def start_screen():
                                 sprite.scroll_down()
                     elif event.button == 5:
                         for sprite in info_labels:
-                            if info_label.dy > -425:
+                            if info_label.dy > -(len(info_label.data) * 70):
                                 sprite.scroll_up()
                 if event.type == pygame.MOUSEBUTTONUP:
                     if return_btn.on_hovered(event.pos):
@@ -95,7 +96,6 @@ def start_screen():
             check_hovered()
             screen.fill("#d7def0")
             info_label.render()
-            screen.blit(leaderboard_label, (240, 0))
             # Отрисовка
             buttons.draw(screen)
             buttons.update()
@@ -107,7 +107,7 @@ def start_screen():
             start_btn = Button(long_button, 389, 314, "ИГРАТЬ")
             settings_btn = Button(long_button, 389, 447, "НАСТРОЙКИ")
             exit_btn = Button(long_button, 389, 580, "ВЫХОД")
-            rating_btn = Button(button, 1150, 37, icon=icons["cup"])
+            rating_btn = Button(button, 1150, 37, icon=pygame.transform.scale(icons["cup"], (55, 55)))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     terminate()
@@ -279,7 +279,6 @@ def game(player1, player2):
                                 transition()
                             else:
                                 game_data[player2]["player_board"] = board.board.copy()
-                                print(game_data)
                                 board.board = game_data[player2]["player_board"]
                                 action["player"] = player1
                                 action["action"] = "attack"
@@ -314,11 +313,11 @@ def game(player1, player2):
                         if pause_btn.on_hovered(event.pos):
                             settings_flag = True
                     # Печать "отладочной информации" об игроках в формате .json
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_SPACE:
-                            print(action["player"])
-                            for key, value in game_data[action["player"]]["player_board"].items():
-                                print(f"{key}: {value}")
+                    # elif event.type == pygame.KEYDOWN:
+                    #     if event.key == pygame.K_SPACE:
+                    #         print(action["player"])
+                    #         for key, value in game_data[action["player"]]["player_board"].items():
+                    #             print(f"{key}: {value}")
                 screen.fill("#D8DDEF")
 
                 flipped_mark = pygame.transform.flip(wall_mark, True, False)
@@ -357,6 +356,9 @@ def game(player1, player2):
                             transition()
                             if game_data[player1]["score"] > game_data[player2]["score"]:
                                 end_screen(player1)
+                                return
+                            elif game_data[player1]["score"] == game_data[player2]["score"]:
+                                end_screen(None)
                                 return
                             else:
                                 end_screen(player2)
@@ -479,7 +481,8 @@ def create_particles(position, particle_count=20):
 
 
 def end_screen(winner_name):
-    win_sound.play()
+    if winner_name:
+        win_sound.play()
     timer = 0
     buttons.empty()
     all_sprites.empty()
@@ -499,28 +502,20 @@ def end_screen(winner_name):
         screen.fill("#6194a2")
         timer += 1
         check_hovered()
-        if timer % 30 == 0:
+        if timer % 30 == 0 and winner_name:
             for _ in range(random.randint(1, 5)):
                 create_particles((random.randint(0, SCREEN_WIDTH - 200), random.randint(0, SCREEN_HEIGHT - 200)), 20)
         all_sprites.draw(screen)
         all_sprites.update()
-        set_text(text_box, f"ПОБЕДИЛ ИГРОК {winner_name}!", font_size=65)
+        if winner_name:
+            set_text(text_box, f"ПОБЕДИЛ ИГРОК {winner_name}!", font_size=65)
+        else:
+            set_text(text_box, f"НИЧЬЯ!", font_size=120)
         # Отрисовка
         buttons.draw(screen)
         buttons.update()
         pygame.display.flip()
         clock.tick(FPS)
-
-
-def warning_window(error):
-    warning_sound.play()
-    text_surf = pygame.Surface((400, 70))
-    warning_textbox = TextBox(text_surf, 482, 325)
-    screen.blit(warning_bg, (389, 314))
-    set_text(warning_textbox, error, font_size=20)
-    pygame.display.flip()
-    clock.tick(FPS)
-    pygame.time.delay(2000)
 
 
 def update_leaderboard(game_data, player1, player2):
@@ -543,39 +538,13 @@ def update_leaderboard(game_data, player1, player2):
     with open("./data/game_data.json", "w") as write_file:
         json.dump(leaderboard_data, write_file, indent=4)
 
-# {(0, 0): {'shield': False, 'attacked': (True, True), 'points': 10},
-# (1, 0): {'shield': True, 'attacked': (True, False), 'points': 10},
-# (2, 0): {'shield': True, 'attacked': (True, False), 'points': 10},
-# (3, 0): {'shield': False, 'attacked': (True, True), 'points': 10},
-# (4, 0): {'shield': False, 'attacked': (True, True), 'points': 10},
-# (5, 0): {'shield': False, 'attacked': (True, True), 'points': 10},
-# (0, 1): {'shield': False, 'attacked': (True, True), 'points': 10},
-# (1, 1): {'shield': False, 'attacked': (False, False), 'points': 20},
-# (2, 1): {'shield': False, 'attacked': (True, True), 'points': 20},
-# (3, 1): {'shield': False, 'attacked': (True, True), 'points': 20},
-# (4, 1): {'shield': True, 'attacked': (False, False), 'points': 20},
-# (5, 1): {'shield': True, 'attacked': (True, False), 'points': 10},
-# (0, 2): {'shield': True, 'attacked': (True, False), 'points': 10},
-# (1, 2): {'shield': True, 'attacked': (False, False), 'points': 20},
-# (2, 2): {'shield': True, 'attacked': (True, False), 'points': 40},
-# (3, 2): {'shield': True, 'attacked': (True, False), 'points': 40},
-# (4, 2): {'shield': False, 'attacked': (True, True), 'points': 20},
-# (5, 2): {'shield': True, 'attacked': (True, False), 'points': 10},
-# (0, 3): {'shield': False, 'attacked': (False, False), 'points': 10},
-# (1, 3): {'shield': True, 'attacked': (False, False), 'points': 20},
-# (2, 3): {'shield': False, 'attacked': (True, True), 'points': 40},
-# (3, 3): {'shield': True, 'attacked': (True, False), 'points': 40},
-# (4, 3): {'shield': False, 'attacked': (True, True), 'points': 20},
-# (5, 3): {'shield': False, 'attacked': (True, True), 'points': 10},
-# (0, 4): {'shield': False, 'attacked': (False, False), 'points': 10},
-# (1, 4): {'shield': True, 'attacked': (False, False), 'points': 20},
-# (2, 4): {'shield': True, 'attacked': (False, False), 'points': 20},
-# (3, 4): {'shield': True, 'attacked': (False, False), 'points': 20},
-# (4, 4): {'shield': True, 'attacked': (True, False), 'points': 20},
-# (5, 4): {'shield': True, 'attacked': (True, False), 'points': 10},
-# (0, 5): {'shield': False, 'attacked': (False, False), 'points': 10},
-# (1, 5): {'shield': True, 'attacked': (False, False), 'points': 10},
-# (2, 5): {'shield': False, 'attacked': (False, False), 'points': 10},
-# (3, 5): {'shield': True, 'attacked': (False, False), 'points': 10},
-# (4, 5): {'shield': False, 'attacked': (True, True), 'points': 10},
-# (5, 5): {'shield': True, 'attacked': (True, False), 'points': 10}}
+
+def warning_window(error):
+    warning_sound.play()
+    text_surf = pygame.Surface((400, 70))
+    warning_textbox = TextBox(text_surf, 482, 325)
+    screen.blit(warning_bg, (389, 314))
+    set_text(warning_textbox, error, font_size=20)
+    pygame.display.flip()
+    clock.tick(FPS)
+    pygame.time.delay(2000)

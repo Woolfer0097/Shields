@@ -123,10 +123,15 @@ class LeaderBoard(pygame.sprite.Sprite):
         super(LeaderBoard, self).__init__(info_labels)
         self.short_label = short_label
         self.long_label = long_label
-        self.data = sorted(get_leader_data(), key=lambda x: x["max_score"], reverse=True)[:10]
+        self.number_label = button
+        self.data = []
         self.length = 0
         self.diff_labels = 150
         self.dy = y1
+        self.update_data()
+
+    def update_data(self):
+        self.data = sorted(get_leader_data(), key=lambda x: x["max_score"], reverse=True)[:10]
 
     def scroll_down(self):
         self.dy += SCROLLING_SPEED
@@ -136,19 +141,23 @@ class LeaderBoard(pygame.sprite.Sprite):
 
     def render(self):
         for i in range(len(self.data)):
+            order_number_label = TextBox(self.number_label, 128, (self.diff_labels * i + self.dy))
             nickname_label = TextBox(self.short_label, 240, (self.diff_labels * i + self.dy))
             max_score_label = TextBox(self.long_label, 501, (self.diff_labels * i + self.dy))
             games_count_label = TextBox(self.short_label, 816, (self.diff_labels * i + self.dy))
+            screen.blit(self.number_label, (128, (self.diff_labels * i + self.dy)))
             screen.blit(self.short_label, (240, (self.diff_labels * i + self.dy)))
             screen.blit(self.long_label, (501, (self.diff_labels * i + self.dy)))
             screen.blit(self.short_label, (816, (self.diff_labels * i + self.dy)))
+            set_text(order_number_label, str(i + 1), font_size=30)
             set_text(nickname_label, str(self.data[i]["nickname"]), font_size=30)
             set_text(max_score_label, str(self.data[i]["max_score"]), font_size=30)
             set_text(games_count_label, str(self.data[i]["games_count"]), font_size=30)
+            screen.blit(leaderboard_label, (240, self.dy - 224))
         self.length = -(((100 * len(self.data)) + 100 * 3) / 2)
 
 
-# Класс, описывающий Поле для ввода текста
+# Класс, описывающий поле для текста
 class TextBox(pygame.sprite.Sprite):
     def __init__(self, image, x, y):
         super(TextBox, self).__init__(all_sprites)

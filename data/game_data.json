@@ -1,8 +1,8 @@
 [
     {
         "nickname": "Woolfer0097",
-        "max_score": 230,
-        "games_count": 23
+        "max_score": 250,
+        "games_count": 24
     },
     {
         "nickname": "NOOB",
@@ -26,8 +26,8 @@
     },
     {
         "nickname": "Maxim123",
-        "max_score": 230,
-        "games_count": 1
+        "max_score": 250,
+        "games_count": 2
     },
     {
         "nickname": "Superman",
@@ -43,5 +43,15 @@
         "nickname": "Winner",
         "max_score": 230,
         "games_count": 23
+    },
+    {
+        "nickname": "Woolfer0098",
+        "max_score": 250,
+        "games_count": 1
+    },
+    {
+        "nickname": "Noober123",
+        "max_score": 120,
+        "games_count": 1
     }
 ]
